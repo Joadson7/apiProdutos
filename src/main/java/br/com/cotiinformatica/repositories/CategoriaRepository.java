@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import br.com.cotiinformatica.dtos.DashboardResponseDto;
 import br.com.cotiinformatica.entities.Categoria;
 import br.com.cotiinformatica.factories.ConnectionFactory;
 
@@ -39,4 +40,47 @@ public class CategoriaRepository {
 
 		}
 	}
+	
+	public List<DashboardResponseDto> groupByQtdProdutos(){
+		
+		try {
+			
+			var connection = connectionFactory.getConnection();
+			
+			var query = """
+					
+					SELECT
+						c.nome as nomecategoria,
+						SUM(p.quantidade) as qtdprodutos
+					FROM produto p 
+					INNER JOIN categoria c
+					ON c.id = p.categoria_id
+					GROUP BY c.nome;
+					
+					""";
+			
+			var statement = connection.prepareStatement(query);
+			var result = statement.executeQuery();
+			
+			var lista = new ArrayList<DashboardResponseDto>();
+			while(result.next()) {
+				
+				var dto = new DashboardResponseDto();
+				dto.setNomeCategoria(result.getString("nomecategoria"));
+				dto.setQtdProdutos(result.getInt("qtdprodutos"));
+				
+				lista.add(dto);
+			}
+			
+			connection.close();
+			return lista;
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+			
+		}
+	}
+	
 }
